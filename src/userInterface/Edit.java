@@ -34,6 +34,7 @@ public class Edit extends JDialog {
 	// }
 	// }
 
+	//enum that contains all information about a single column
 	public static class Quadruple {
 		public enum TupleType {
 			TextField, TextArea, dateTime
@@ -112,7 +113,7 @@ public class Edit extends JDialog {
 				if (id == -1) {
 					String sql = "INSERT INTO " + tableName + " (";
 					Iterator it = result.entrySet().iterator();
-					// Schleife für Spalten-Namen
+					// Schleife fï¿½r Spalten-Namen
 					while (it.hasNext()) {
 						Map.Entry pair = (Map.Entry) it.next();
 						String key = pair.getKey().toString();
@@ -121,7 +122,7 @@ public class Edit extends JDialog {
 					sql = sql.substring(0, sql.length() - 2);
 					sql += ") VALUES (";
 					it = result.entrySet().iterator();
-					// Schleife für Spalten-Werte
+					// Schleife fï¿½r Spalten-Werte
 					while (it.hasNext()) {
 						Map.Entry pair = (Map.Entry) it.next();
 						String key = pair.getKey().toString();
