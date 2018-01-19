@@ -83,7 +83,7 @@ public class Edit extends JDialog {
 
 			obj = new JTextField();
 			if (id >= 0)
-				((JTextField) obj).setText((String) tuple.Value);
+				((JTextField) obj).setText(tuple.Value.toString());
 			content.add((JTextField) obj);
 
 			result.put(tuple.Key, obj);
@@ -189,7 +189,7 @@ public class Edit extends JDialog {
 		} else
 			this.setTitle("Add " + tableName);
 		this.pack();
-		this.setSize(new Dimension(300, 500));
+		this.setSize(new Dimension(423, 420));
 		this.setVisible(true);
 		this.setResizable(false);
 	}
