@@ -39,10 +39,13 @@ public class Main {
 	private JFrame frmCarrental;
 	private JTextField textField;
 	private JTable table;
+	private DefaultTableModel tableModel = new DefaultTableModel();
+	
 	private static Edit.TableName[] tables = { TableName.Addresses, TableName.Bills, TableName.Car_Brands,
 			TableName.Clients, TableName.Damages, TableName.Equipment, TableName.Extra_Equipment, TableName.Insurances,
 			TableName.Reservations, TableName.Vehicles, TableName.Reservations_Damages,
 			TableName.Reservations_Extraequipment, TableName.Vehicles_Equipment };
+	
 	private static JComboBox comboBox_1 = new JComboBox(tables);
 	private Edit edit;
 	private JButton btnAdd, btnEdit, btnDelete;
@@ -122,6 +125,24 @@ public class Main {
 		});
 
 		JScrollPane scrollPane = new JScrollPane();
+		
+		table = new JTable(this.tableModel);
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.getTableHeader().setReorderingAllowed(false);
+		table.addMouseListener(new java.awt.event.MouseAdapter() {
+
+			/**
+			 * Sets selected the row the user clicked on the tableProject.
+			 */
+			@Override
+			public void mousePressed(java.awt.event.MouseEvent evt) {
+				btnDelete.setEnabled(true);
+				btnEdit.setEnabled(true);
+			}
+		});
+		
+		
+		scrollPane.setViewportView(table);
 
 		GroupLayout gl_panel = new GroupLayout(panel);
 		gl_panel.setHorizontalGroup(gl_panel.createParallelGroup(Alignment.LEADING).addGroup(gl_panel
@@ -169,15 +190,39 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {
 				btnEdit.setEnabled(false);
 				btnDelete.setEnabled(false);
-				String[] col = Utilities.getColumns();
-				String[][] data = Utilities
-						.loadAllData("Select * from " + String.valueOf(comboBox_1.getSelectedItem()));
-				comboBox.removeAllItems();
-				for (int i = 0; i < col.length; i++) {
-
-					comboBox.addItem(col[i]);
+				String sql = "";
+				switch (String.valueOf(comboBox_1.getSelectedItem())) {
+					case "Clients":
+						sql = "SELECT c.clients_id, first_name, last_name, phone, driving_license_number, a.city, a.cap, a.street, a.country from clients c inner join addresses a on c.addresses_id = a.addresses_id;";
+						break;
+					case "Reservations":
+						sql = "select r.reservations_id, date_starttime, date_endtime, km_at_start, km_at_return, license_plate, c.first_name, c.last_name, b.bill, b.date as bill_date, b.total_price, b.date_of_payment, b.payment_method from reservations r inner join bills b on r.bills_id = b.bills_id inner join clients c on r.clients_id = c.clients_id;";
+						break;
+					case "Vehicles":
+						sql = "Select license_plate, initial_registration, price_class, capacity, price_day, price_km, model, b.company_name, i.company_name from vehicles v inner join car_brands b on b.car_brands_id = v.car_brands_id inner join insurances i on i.insurances_id = v.insurances_id;";
+						break;
+					case "Reservations_Damages":
+						sql = "select d.damages_id, r.reservations_id, d.description, d.position_part, fine, r.license_plate, c.first_name, c.last_name from reservations_damages rd inner join damages d on rd.damages_id = d.damages_id inner join reservations r on rd.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id;";
+						break;
+					case "Reservations_Extraequipment":
+						sql = "select e.extra_equipment_id, r.reservations_id, e.description, quantity, r.license_plate, c.first_name, c.last_name from reservations_extraequipment re inner join extra_equipment e on re.extra_equipment_id = e.extra_equipment_id inner join reservations r on re.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id;";
+						break;
+					case "Vehicles_Equipment":
+						sql = "select license_plate, e.equiptment_id, e.description from vehicles_equipment v inner join equipment e on v.equipment_id = e.equipment_id;";
+						break;
+					default:
+						sql = "Select * from " + String.valueOf(comboBox_1.getSelectedItem());
 				}
-				scrollPane.setViewportView(createTable(col, data));
+				try {
+				DefaultTableModel data = Utilities.loadAllData(sql);
+				comboBox.removeAllItems();
+				for(int i = 0; i < data.getColumnCount(); i++) {
+					comboBox.addItem(data.getColumnName(i));
+				}
+				setTableData(data);
+				}catch(SQLException e) {
+					e.printStackTrace();
+				}
 			}
 
 		});
@@ -315,48 +360,9 @@ public class Main {
 	}
 
 	// creates the selected table table
-	private JTable createTable(String[] col, String[][] data) {
-
-		table = new JTable(data, col);
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-		table.addMouseListener(new MouseListener() {
-
-			@Override
-			public void mouseReleased(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				btnEdit.setEnabled(true);
-				btnDelete.setEnabled(true);
-			}
-
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				btnEdit.setEnabled(true);
-				btnDelete.setEnabled(true);
-			}
-
-			@Override
-			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				btnEdit.setEnabled(true);
-				btnDelete.setEnabled(true);
-			}
-		});
-
-		return table;
+	private void setTableData(DefaultTableModel data) {
+		this.tableModel = data;
+		this.table.setModel(this.tableModel);
 	}
 
 	public static JComboBox getComboBox_1() {
