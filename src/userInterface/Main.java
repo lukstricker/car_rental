@@ -13,6 +13,8 @@ import javax.swing.JLabel;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.sql.PreparedStatement;
@@ -23,6 +25,7 @@ import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
 import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.plaf.metal.MetalBorders.TableHeaderBorder;
 import javax.swing.ListSelectionModel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -36,11 +39,13 @@ public class Main {
 	private JFrame frmCarrental;
 	private JTextField textField;
 	private JTable table;
-	private static String[] tables = { "Addresses", "Bills", "Car_Brands", "Clients", "Damages", "Equipment",
-			"Extra_Equipment", "Insurances", "Reservations", "Reservations_Damages", "Reservations_Extraequipment",
-			"Vehicles", "Vehicles_Equipment" };
+	private static Edit.TableName[] tables = { TableName.Addresses, TableName.Bills, TableName.Car_Brands,
+			TableName.Clients, TableName.Damages, TableName.Equipment, TableName.Extra_Equipment, TableName.Insurances,
+			TableName.Reservations, TableName.Vehicles, TableName.Reservations_Damages,
+			TableName.Reservations_Extraequipment, TableName.Vehicles_Equipment };
 	private static JComboBox comboBox_1 = new JComboBox(tables);
 	private Edit edit;
+	private JButton btnAdd, btnEdit, btnDelete;
 
 	/**
 	 * Launch the application.
@@ -95,22 +100,25 @@ public class Main {
 
 		JButton btnSearch = new JButton("SEARCH");
 
-		JButton btnAdd = new JButton("ADD");
+		btnAdd = new JButton("ADD");
 
-		JButton btnEdit = new JButton("EDIT");
+		btnEdit = new JButton("EDIT");
+		btnEdit.setEnabled(false);
 
-		
 		JComboBox comboBox = new JComboBox();
-		JButton btnDelete = new JButton("DELETE");
+
+		btnDelete = new JButton("DELETE");
+		btnDelete.setEnabled(false);
 
 		btnDelete.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Utilities.delete();
-
+				String currentTable = String.valueOf(comboBox_1.getSelectedItem());
+				int currentRow = table.getSelectedRow();
+				int id = Integer.parseInt(table.getValueAt(currentRow, 0).toString());
+				Utilities.delete(id, currentTable.toLowerCase());
 			}
-
 		});
 
 		JScrollPane scrollPane = new JScrollPane();
@@ -159,6 +167,8 @@ public class Main {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				btnEdit.setEnabled(false);
+				btnDelete.setEnabled(false);
 				String[] col = Utilities.getColumns();
 				String[][] data = Utilities
 						.loadAllData("Select * from " + String.valueOf(comboBox_1.getSelectedItem()));
@@ -168,7 +178,6 @@ public class Main {
 					comboBox.addItem(col[i]);
 				}
 				scrollPane.setViewportView(createTable(col, data));
-
 			}
 
 		});
@@ -177,28 +186,27 @@ public class Main {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String currentTable = String.valueOf(comboBox_1.getSelectedItem());
-				System.out.println(currentTable);
 				switch (currentTable) {
 				case "Insurances":
-					edit = new Edit(TableName.insurances, -1, 
+					edit = new Edit(TableName.Insurances, -1,
 							new Edit.Quadruple[] { new Edit.Quadruple("company_name", null, TupleType.TextField, true),
-									new Edit.Quadruple("fee", null, TupleType.TextField, true) });
+									new Edit.Quadruple("fee", null, TupleType.TextFieldInt, true) });
 					break;
 				case "Equipment":
-					edit = new Edit(TableName.equipment, -1, new Edit.Quadruple[] {
+					edit = new Edit(TableName.Equipment, -1, new Edit.Quadruple[] {
 							new Edit.Quadruple("description", null, TupleType.TextField, true) });
 					break;
 				case "Damages":
-					edit = new Edit(TableName.damages, -1,
+					edit = new Edit(TableName.Damages, -1,
 							new Edit.Quadruple[] { new Edit.Quadruple("description", null, TupleType.TextField, true),
 									new Edit.Quadruple("position_part", null, TupleType.TextField, true) });
 					break;
-				case "Vehicles":
-					edit = new Edit(TableName.car_brands, -1, new Edit.Quadruple[] {
+				case "Car_Brands":
+					edit = new Edit(TableName.Car_Brands, -1, new Edit.Quadruple[] {
 							new Edit.Quadruple("company_name", null, TupleType.TextField, true) });
 					break;
-				case "Car_Brands":
-					edit = new Edit(TableName.vehicles, -1,
+				case "Vehicles":
+					edit = new Edit(TableName.Vehicles, -1,
 							new Edit.Quadruple[] { new Edit.Quadruple("license_plate", null, TupleType.TextField, true),
 									new Edit.Quadruple("initial_registration", null, TupleType.dateTime, true),
 									new Edit.Quadruple("price_class", null, TupleType.TextField, true),
@@ -210,67 +218,93 @@ public class Main {
 									new Edit.Quadruple("insurance_id", null, TupleType.TextField, true) });
 					break;
 				case "Extra_Equipment":
-					edit = new Edit(TableName.extra_equipment, -1,
+					edit = new Edit(TableName.Extra_Equipment, -1,
 							new Edit.Quadruple[] { new Edit.Quadruple("description", null, TupleType.TextField, true),
 									new Edit.Quadruple("price", null, TupleType.TextField, true),
 									new Edit.Quadruple("total_quantity", null, TupleType.TextField, true) });
 					break;
+				case "Bills":
+					edit = new Edit(TableName.Bills, -1,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("payment_method", null, TupleType.TextField, true),
+									new Edit.Quadruple("bill", null, TupleType.TextField, true),
+									new Edit.Quadruple("date", null, TupleType.date, true),
+									new Edit.Quadruple("total_price", null, TupleType.TextField, true),
+									new Edit.Quadruple("date_of_payment", null, TupleType.date, true) });
+					break;
+
 				}
-
-				// edit.addWindowListener(new WindowListener() {
-				//
-				// @Override
-				// public void windowOpened(WindowEvent arg0) {
-				// // TODO Auto-generated method stub
-				//
-				// }
-				//
-				// @Override
-				// public void windowIconified(WindowEvent arg0) {
-				// // TODO Auto-generated method stub
-				//
-				// }
-				//
-				// @Override
-				// public void windowDeiconified(WindowEvent arg0) {
-				// // TODO Auto-generated method stub
-				//
-				// }
-				//
-				// @Override
-				// public void windowDeactivated(WindowEvent arg0) {
-				// // TODO Auto-generated method stub
-				//
-				// }
-				//
-				// @Override
-				// public void windowClosing(WindowEvent arg0) {
-				// // TODO Auto-generated method stub
-				//
-				// }
-				//
-				// @Override
-				// public void windowClosed(WindowEvent arg0) {
-				// String vorname = ((JTextField)edit.result.get("Vorname")).getText();
-				// System.out.print(vorname);
-				// }
-				//
-				// @Override
-				// public void windowActivated(WindowEvent arg0) {
-				// // TODO Auto-generated method stub
-				//
-				// }
-				// });
-
 			}
 
 		});
-		
+
 		btnEdit.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				
+
+				String currentTable = String.valueOf(comboBox_1.getSelectedItem());
+				int currentRow = table.getSelectedRow();
+				int id = Integer.parseInt(table.getValueAt(currentRow, 0).toString());
+				switch (currentTable) {
+				case "Insurances":
+					edit = new Edit(TableName.Insurances, id, new Edit.Quadruple[] {
+							new Edit.Quadruple("company_name", table.getValueAt(currentRow, 1), TupleType.TextField,
+									true),
+							new Edit.Quadruple("fee", table.getValueAt(currentRow, 2), TupleType.TextFieldInt, true) });
+					break;
+				case "Equipment":
+					edit = new Edit(TableName.Equipment, id, new Edit.Quadruple[] { new Edit.Quadruple("description",
+							table.getValueAt(currentRow, 1), TupleType.TextField, true) });
+					break;
+				case "Damages":
+					edit = new Edit(TableName.Damages, id,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("description", table.getValueAt(currentRow, 1),
+											TupleType.TextField, true),
+									new Edit.Quadruple("position_part", table.getValueAt(currentRow, 2),
+											TupleType.TextField, true) });
+					break;
+				case "Car_Brands":
+					edit = new Edit(TableName.Car_Brands, id, new Edit.Quadruple[] { new Edit.Quadruple("company_name",
+							table.getValueAt(currentRow, 1), TupleType.TextField, true) });
+					break;
+				case "Vehicles":
+					edit = new Edit(TableName.Vehicles, id, new Edit.Quadruple[] {
+							new Edit.Quadruple("license_plate", table.getValueAt(currentRow, 1), TupleType.TextField,
+									true),
+							new Edit.Quadruple("initial_registration", table.getValueAt(currentRow, 2),
+									TupleType.dateTime, true),
+							new Edit.Quadruple("price_class", table.getValueAt(currentRow, 3), TupleType.TextField,
+									true),
+							new Edit.Quadruple("capacity", table.getValueAt(currentRow, 4), TupleType.TextField, true),
+							new Edit.Quadruple("price_day", table.getValueAt(currentRow, 5), TupleType.TextField, true),
+							new Edit.Quadruple("price_km", table.getValueAt(currentRow, 6), TupleType.TextField, true),
+							new Edit.Quadruple("model", table.getValueAt(currentRow, 7), TupleType.TextField, true),
+							new Edit.Quadruple("brand_id", table.getValueAt(currentRow, 8), TupleType.TextField, true),
+							new Edit.Quadruple("insurance_id", table.getValueAt(currentRow, 9), TupleType.TextField,
+									true) });
+					break;
+				case "Extra_Equipment":
+					edit = new Edit(TableName.Extra_Equipment, id, new Edit.Quadruple[] {
+							new Edit.Quadruple("description", table.getValueAt(currentRow, 1), TupleType.TextField,
+									true),
+							new Edit.Quadruple("price", table.getValueAt(currentRow, 2), TupleType.TextField, true),
+							new Edit.Quadruple("total_quantity", table.getValueAt(currentRow, 3), TupleType.TextField,
+									true) });
+					break;
+				case "Bills":
+					edit = new Edit(TableName.Bills, id, new Edit.Quadruple[] {
+							new Edit.Quadruple("payment_method", table.getValueAt(currentRow, 1), TupleType.TextField,
+									true),
+							new Edit.Quadruple("bill", table.getValueAt(currentRow, 2), TupleType.TextField, true),
+							new Edit.Quadruple("date", table.getValueAt(currentRow, 3), TupleType.date, true),
+							new Edit.Quadruple("total_price", table.getValueAt(currentRow, 4), TupleType.TextField,
+									true),
+							new Edit.Quadruple("date_of_payment", table.getValueAt(currentRow, 5), TupleType.date,
+									true) });
+					break;
+				}
 
 			}
 
@@ -285,6 +319,43 @@ public class Main {
 
 		table = new JTable(data, col);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		table.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				btnEdit.setEnabled(true);
+				btnDelete.setEnabled(true);
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				btnEdit.setEnabled(true);
+				btnDelete.setEnabled(true);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				btnEdit.setEnabled(true);
+				btnDelete.setEnabled(true);
+			}
+		});
+
 		return table;
 	}
 
