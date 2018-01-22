@@ -40,13 +40,14 @@ public class Main {
 	private JTextField textField;
 	private JTable table;
 	private DefaultTableModel tableModel = new DefaultTableModel();
-	
+
 	private static Edit.TableName[] tables = { TableName.Addresses, TableName.Bills, TableName.Car_Brands,
 			TableName.Clients, TableName.Damages, TableName.Equipment, TableName.Extra_Equipment, TableName.Insurances,
 			TableName.Reservations, TableName.Vehicles, TableName.Reservations_Damages,
 			TableName.Reservations_Extraequipment, TableName.Vehicles_Equipment };
-	
-	private static JComboBox comboBox_1 = new JComboBox(tables);
+
+	private JComboBox comboBox_1 = new JComboBox(tables);
+	private JComboBox comboBox = new JComboBox();
 	private Edit edit;
 	private JButton btnAdd, btnEdit, btnDelete;
 
@@ -102,14 +103,25 @@ public class Main {
 		textField.setColumns(10);
 
 		JButton btnSearch = new JButton("SEARCH");
+		btnSearch.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String text = textField.getText();
+				if (text != null && text.trim().length() > 0) {
+					setTableData(text);
+				}
+
+			}
+		});
 
 		btnAdd = new JButton("ADD");
 
 		btnEdit = new JButton("EDIT");
 		btnEdit.setEnabled(false);
-
+		
+		
 		JComboBox comboBox = new JComboBox();
-
 		btnDelete = new JButton("DELETE");
 		btnDelete.setEnabled(false);
 
@@ -125,7 +137,7 @@ public class Main {
 		});
 
 		JScrollPane scrollPane = new JScrollPane();
-		
+
 		table = new JTable(this.tableModel);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.getTableHeader().setReorderingAllowed(false);
@@ -140,8 +152,7 @@ public class Main {
 				btnEdit.setEnabled(true);
 			}
 		});
-		
-		
+
 		scrollPane.setViewportView(table);
 
 		GroupLayout gl_panel = new GroupLayout(panel);
@@ -190,39 +201,7 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {
 				btnEdit.setEnabled(false);
 				btnDelete.setEnabled(false);
-				String sql = "";
-				switch (String.valueOf(comboBox_1.getSelectedItem())) {
-					case "Clients":
-						sql = "SELECT c.clients_id, first_name, last_name, phone, driving_license_number, a.city, a.cap, a.street, a.country from clients c inner join addresses a on c.addresses_id = a.addresses_id;";
-						break;
-					case "Reservations":
-						sql = "select r.reservations_id, date_starttime, date_endtime, km_at_start, km_at_return, license_plate, c.first_name, c.last_name, b.bill, b.date as bill_date, b.total_price, b.date_of_payment, b.payment_method from reservations r inner join bills b on r.bills_id = b.bills_id inner join clients c on r.clients_id = c.clients_id;";
-						break;
-					case "Vehicles":
-						sql = "Select license_plate, initial_registration, price_class, capacity, price_day, price_km, model, b.company_name, i.company_name from vehicles v inner join car_brands b on b.car_brands_id = v.car_brands_id inner join insurances i on i.insurances_id = v.insurances_id;";
-						break;
-					case "Reservations_Damages":
-						sql = "select d.damages_id, r.reservations_id, d.description, d.position_part, fine, r.license_plate, c.first_name, c.last_name from reservations_damages rd inner join damages d on rd.damages_id = d.damages_id inner join reservations r on rd.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id;";
-						break;
-					case "Reservations_Extraequipment":
-						sql = "select e.extra_equipment_id, r.reservations_id, e.description, quantity, r.license_plate, c.first_name, c.last_name from reservations_extraequipment re inner join extra_equipment e on re.extra_equipment_id = e.extra_equipment_id inner join reservations r on re.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id;";
-						break;
-					case "Vehicles_Equipment":
-						sql = "select license_plate, e.equiptment_id, e.description from vehicles_equipment v inner join equipment e on v.equipment_id = e.equipment_id;";
-						break;
-					default:
-						sql = "Select * from " + String.valueOf(comboBox_1.getSelectedItem());
-				}
-				try {
-				DefaultTableModel data = Utilities.loadAllData(sql);
-				comboBox.removeAllItems();
-				for(int i = 0; i < data.getColumnCount(); i++) {
-					comboBox.addItem(data.getColumnName(i));
-				}
-				setTableData(data);
-				}catch(SQLException e) {
-					e.printStackTrace();
-				}
+				setTableData(null);
 			}
 
 		});
@@ -360,13 +339,46 @@ public class Main {
 	}
 
 	// creates the selected table table
-	private void setTableData(DefaultTableModel data) {
-		this.tableModel = data;
-		this.table.setModel(this.tableModel);
-	}
+	private void setTableData(String whereField) {
+		String table = String.valueOf(comboBox_1.getSelectedItem());
+		String sql = "";
+		switch (table) {
+		case "Clients":
+			sql = "SELECT c.clients_id, first_name, last_name, phone, driving_license_number, a.city, a.cap, a.street, a.country from clients c inner join addresses a on c.addresses_id = a.addresses_id";
+			break;
+		case "Reservations":
+			sql = "select r.reservations_id, date_starttime, date_endtime, km_at_start, km_at_return, license_plate, c.first_name, c.last_name, b.bill, b.date as bill_date, b.total_price, b.date_of_payment, b.payment_method from reservations r inner join bills b on r.bills_id = b.bills_id inner join clients c on r.clients_id = c.clients_id";
+			break;
+		case "Vehicles":
+			sql = "Select license_plate, initial_registration, price_class, capacity, price_day, price_km, model, b.company_name, i.company_name from vehicles v inner join car_brands b on b.car_brands_id = v.car_brands_id inner join insurances i on i.insurances_id = v.insurances_id";
+			break;
+		case "Reservations_Damages":
+			sql = "select d.damages_id, r.reservations_id, d.description, d.position_part, fine, r.license_plate, c.first_name, c.last_name from reservations_damages rd inner join damages d on rd.damages_id = d.damages_id inner join reservations r on rd.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id";
+			break;
+		case "Reservations_Extraequipment":
+			sql = "select e.extra_equipment_id, r.reservations_id, e.description, quantity, r.license_plate, c.first_name, c.last_name from reservations_extraequipment re inner join extra_equipment e on re.extra_equipment_id = e.extra_equipment_id inner join reservations r on re.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id";
+			break;
+		case "Vehicles_Equipment":
+			sql = "select license_plate, e.equiptment_id, e.description from vehicles_equipment v inner join equipment e on v.equipment_id = e.equipment_id";
+			break;
+		default:
+			sql = "Select * from " + table;
+		}
+		if (whereField != null && whereField.trim().length() > 0) {
+			sql += " where " + table + "='" + whereField + "';";
+		} else
+			sql += ";";
 
-	public static JComboBox getComboBox_1() {
-		return comboBox_1;
+		try {
+			DefaultTableModel data = Utilities.loadAllData(sql);
+			this.tableModel = data;
+			this.table.setModel(this.tableModel);
+			comboBox.removeAllItems();
+			for (int i = 0; i < data.getColumnCount(); i++) {
+				comboBox.addItem(data.getColumnName(i));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
-
 }

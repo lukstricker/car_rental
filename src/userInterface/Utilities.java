@@ -109,29 +109,6 @@ public class Utilities {
 		return rows;
 	}
 
-	public static String[] getColumns() {
-		String[] columns = null;
-		try {
-			db = new Database();
-			String query = "SELECT * FROM " + String.valueOf(Main.getComboBox_1().getSelectedItem());
-			ResultSet rs = db.getData(query);
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int NumberOfColumns = rsmd.getColumnCount();
-			columns = new String[NumberOfColumns];
-
-			for (int i = 1; i <= NumberOfColumns; i++) {
-				columns[i - 1] = rsmd.getColumnName(i);
-			}
-			db.closeConnection();
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return columns;
-
-	}
-
 	public static void updateTableHeader(JTable table) {
 		JTableHeader th = table.getTableHeader();
 		TableColumnModel tcm = th.getColumnModel();
