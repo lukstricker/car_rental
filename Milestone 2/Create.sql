@@ -5,8 +5,7 @@
 
 CREATE table Damages (
     damages_id SERIAL primary key,
-    description varchar(80),
-    position_part varchar(80)
+    description varchar(120)
 );
 
 CREATE table Car_Brands (

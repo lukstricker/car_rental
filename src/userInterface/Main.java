@@ -46,7 +46,7 @@ public class Main {
 			TableName.Reservations, TableName.Vehicles, TableName.Reservations_Damages,
 			TableName.Reservations_Extraequipment, TableName.Vehicles_Equipment };
 
-	private JComboBox comboBox_1 = new JComboBox(tables);
+	private JComboBox comboBox_Table = new JComboBox(tables);
 	private JComboBox comboBox = new JComboBox();
 	private Edit edit;
 	private JButton btnAdd, btnEdit, btnDelete;
@@ -110,7 +110,8 @@ public class Main {
 				String text = textField.getText();
 				if (text != null && text.trim().length() > 0) {
 					setTableData(text);
-				}
+				} else
+					setTableData(null);
 
 			}
 		});
@@ -119,9 +120,7 @@ public class Main {
 
 		btnEdit = new JButton("EDIT");
 		btnEdit.setEnabled(false);
-		
-		
-		JComboBox comboBox = new JComboBox();
+
 		btnDelete = new JButton("DELETE");
 		btnDelete.setEnabled(false);
 
@@ -129,7 +128,7 @@ public class Main {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String currentTable = String.valueOf(comboBox_1.getSelectedItem());
+				String currentTable = String.valueOf(comboBox_Table.getSelectedItem());
 				int currentRow = table.getSelectedRow();
 				int id = Integer.parseInt(table.getValueAt(currentRow, 0).toString());
 				Utilities.delete(id, currentTable.toLowerCase());
@@ -172,7 +171,7 @@ public class Main {
 												GroupLayout.PREFERRED_SIZE))))
 						.addGroup(gl_panel.createSequentialGroup().addGap(411).addComponent(lblTitle))
 						.addGroup(gl_panel.createSequentialGroup().addContainerGap()
-								.addComponent(comboBox_1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+								.addComponent(comboBox_Table, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
 										GroupLayout.PREFERRED_SIZE)
 								.addGap(18)
 								.addComponent(textField, GroupLayout.PREFERRED_SIZE, 152, GroupLayout.PREFERRED_SIZE)
@@ -183,7 +182,7 @@ public class Main {
 		gl_panel.setVerticalGroup(gl_panel.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panel.createSequentialGroup().addGap(20).addComponent(lblTitle).addGap(18)
 						.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE)
-								.addComponent(comboBox_1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+								.addComponent(comboBox_Table, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
 										GroupLayout.PREFERRED_SIZE)
 								.addComponent(textField, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE)
 								.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
@@ -195,7 +194,7 @@ public class Main {
 						.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE).addComponent(btnAdd)
 								.addComponent(btnEdit).addComponent(btnDelete))
 						.addGap(27)));
-		comboBox_1.addActionListener(new ActionListener() {
+		comboBox_Table.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -209,52 +208,92 @@ public class Main {
 		btnAdd.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String currentTable = String.valueOf(comboBox_1.getSelectedItem());
+				String currentTable = String.valueOf(comboBox_Table.getSelectedItem());
 				switch (currentTable) {
 				case "Insurances":
 					edit = new Edit(TableName.Insurances, -1,
-							new Edit.Quadruple[] { new Edit.Quadruple("company_name", null, TupleType.TextField, true),
-									new Edit.Quadruple("fee", null, TupleType.TextFieldInt, true) });
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("company_name", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("fee", null, TupleType.TextFieldInt, true, null) });
+					break;
+				case "Clients":
+					edit = new Edit(TableName.Clients, -1,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("first_name", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("last_name", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("phone", null, TupleType.TextFieldInt, true, null),
+									new Edit.Quadruple("driving_license_number", null, TupleType.TextFieldInt, true, null),
+									new Edit.Quadruple("addresses_id", null, TupleType.ComboBox, false, TableName.Addresses) });
 					break;
 				case "Equipment":
 					edit = new Edit(TableName.Equipment, -1, new Edit.Quadruple[] {
-							new Edit.Quadruple("description", null, TupleType.TextField, true) });
+							new Edit.Quadruple("description", null, TupleType.TextField, true, null) });
 					break;
 				case "Damages":
 					edit = new Edit(TableName.Damages, -1,
-							new Edit.Quadruple[] { new Edit.Quadruple("description", null, TupleType.TextField, true),
-									new Edit.Quadruple("position_part", null, TupleType.TextField, true) });
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("description", null, TupleType.TextField, true, null) });
 					break;
 				case "Car_Brands":
 					edit = new Edit(TableName.Car_Brands, -1, new Edit.Quadruple[] {
-							new Edit.Quadruple("company_name", null, TupleType.TextField, true) });
+							new Edit.Quadruple("company_name", null, TupleType.TextField, true, null) });
 					break;
 				case "Vehicles":
 					edit = new Edit(TableName.Vehicles, -1,
-							new Edit.Quadruple[] { new Edit.Quadruple("license_plate", null, TupleType.TextField, true),
-									new Edit.Quadruple("initial_registration", null, TupleType.dateTime, true),
-									new Edit.Quadruple("price_class", null, TupleType.TextField, true),
-									new Edit.Quadruple("capacity", null, TupleType.TextField, true),
-									new Edit.Quadruple("price_day", null, TupleType.TextField, true),
-									new Edit.Quadruple("price_km", null, TupleType.TextField, true),
-									new Edit.Quadruple("model", null, TupleType.TextField, true),
-									new Edit.Quadruple("brand_id", null, TupleType.TextField, true),
-									new Edit.Quadruple("insurance_id", null, TupleType.TextField, true) });
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("license_plate", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("initial_registration", null, TupleType.dateTime, true, null),
+									new Edit.Quadruple("price_class", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("capacity", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("price_day", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("price_km", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("model", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("brand_id", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("insurance_id", null, TupleType.TextField, true, null) });
 					break;
 				case "Extra_Equipment":
 					edit = new Edit(TableName.Extra_Equipment, -1,
-							new Edit.Quadruple[] { new Edit.Quadruple("description", null, TupleType.TextField, true),
-									new Edit.Quadruple("price", null, TupleType.TextField, true),
-									new Edit.Quadruple("total_quantity", null, TupleType.TextField, true) });
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("description", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("price", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("total_quantity", null, TupleType.TextField, true, null) });
 					break;
 				case "Bills":
 					edit = new Edit(TableName.Bills, -1,
 							new Edit.Quadruple[] {
-									new Edit.Quadruple("payment_method", null, TupleType.TextField, true),
-									new Edit.Quadruple("bill", null, TupleType.TextField, true),
-									new Edit.Quadruple("date", null, TupleType.date, true),
-									new Edit.Quadruple("total_price", null, TupleType.TextField, true),
-									new Edit.Quadruple("date_of_payment", null, TupleType.date, true) });
+									new Edit.Quadruple("payment_method", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("bill", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("date", null, TupleType.date, true, null),
+									new Edit.Quadruple("total_price", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("date_of_payment", null, TupleType.date, true, null) });
+					break;
+				case "Addresses":
+					edit = new Edit(TableName.Addresses, -1,
+							new Edit.Quadruple[] { new Edit.Quadruple("city", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("cap", null, TupleType.TextFieldInt, true, null),
+									new Edit.Quadruple("street", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("country", null, TupleType.TextField, true, null) });
+					break;
+				case "Reservations_Damages":
+					edit = new Edit(TableName.Reservations_Damages, -1, new Edit.Quadruple[] {
+							new Edit.Quadruple("description", null, TupleType.ComboBox, false, TableName.Damages),
+							new Edit.Quadruple("reservations_id", null, TupleType.ComboBox, false,
+									TableName.Reservations),
+							new Edit.Quadruple("fine", null, TupleType.TextField, true, null) });
+					break;
+				case "Reservations_Extraequipment":
+					edit = new Edit(TableName.Reservations_Extraequipment, -1,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("description", null, TupleType.ComboBox, false,
+											TableName.Extra_Equipment),
+									new Edit.Quadruple("reservations_id", null, TupleType.ComboBox, false,
+											TableName.Reservations),
+									new Edit.Quadruple("quantity", null, TupleType.TextField, true, null) });
+					break;
+				case "Vehicles_Equipment":
+					edit = new Edit(TableName.Vehicles_Equipment, -1, new Edit.Quadruple[] {
+							new Edit.Quadruple("license_plate", null, TupleType.ComboBox, false, TableName.Vehicles),
+							new Edit.Quadruple("description", null, TupleType.ComboBox, false, TableName.Equipment) });
 					break;
 
 				}
@@ -267,80 +306,91 @@ public class Main {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 
-				String currentTable = String.valueOf(comboBox_1.getSelectedItem());
+				String currentTable = String.valueOf(comboBox_Table.getSelectedItem());
 				int currentRow = table.getSelectedRow();
 				int id = Integer.parseInt(table.getValueAt(currentRow, 0).toString());
 				switch (currentTable) {
 				case "Insurances":
-					edit = new Edit(TableName.Insurances, id, new Edit.Quadruple[] {
-							new Edit.Quadruple("company_name", table.getValueAt(currentRow, 1), TupleType.TextField,
-									true),
-							new Edit.Quadruple("fee", table.getValueAt(currentRow, 2), TupleType.TextFieldInt, true) });
+					edit = new Edit(TableName.Insurances, id,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("company_name", table.getValueAt(currentRow, 1),
+											TupleType.TextField, true, null),
+									new Edit.Quadruple("fee", table.getValueAt(currentRow, 2), TupleType.TextFieldInt,
+											true, null) });
 					break;
 				case "Equipment":
 					edit = new Edit(TableName.Equipment, id, new Edit.Quadruple[] { new Edit.Quadruple("description",
-							table.getValueAt(currentRow, 1), TupleType.TextField, true) });
+							table.getValueAt(currentRow, 1), TupleType.TextField, true, null) });
 					break;
 				case "Damages":
 					edit = new Edit(TableName.Damages, id,
 							new Edit.Quadruple[] {
 									new Edit.Quadruple("description", table.getValueAt(currentRow, 1),
-											TupleType.TextField, true),
+											TupleType.TextField, true, null),
 									new Edit.Quadruple("position_part", table.getValueAt(currentRow, 2),
-											TupleType.TextField, true) });
+											TupleType.TextField, true, null) });
 					break;
 				case "Car_Brands":
 					edit = new Edit(TableName.Car_Brands, id, new Edit.Quadruple[] { new Edit.Quadruple("company_name",
-							table.getValueAt(currentRow, 1), TupleType.TextField, true) });
+							table.getValueAt(currentRow, 1), TupleType.TextField, true, null) });
 					break;
 				case "Vehicles":
-					edit = new Edit(TableName.Vehicles, id, new Edit.Quadruple[] {
-							new Edit.Quadruple("license_plate", table.getValueAt(currentRow, 1), TupleType.TextField,
-									true),
-							new Edit.Quadruple("initial_registration", table.getValueAt(currentRow, 2),
-									TupleType.dateTime, true),
-							new Edit.Quadruple("price_class", table.getValueAt(currentRow, 3), TupleType.TextField,
-									true),
-							new Edit.Quadruple("capacity", table.getValueAt(currentRow, 4), TupleType.TextField, true),
-							new Edit.Quadruple("price_day", table.getValueAt(currentRow, 5), TupleType.TextField, true),
-							new Edit.Quadruple("price_km", table.getValueAt(currentRow, 6), TupleType.TextField, true),
-							new Edit.Quadruple("model", table.getValueAt(currentRow, 7), TupleType.TextField, true),
-							new Edit.Quadruple("brand_id", table.getValueAt(currentRow, 8), TupleType.TextField, true),
-							new Edit.Quadruple("insurance_id", table.getValueAt(currentRow, 9), TupleType.TextField,
-									true) });
+					edit = new Edit(TableName.Vehicles, id,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("license_plate", table.getValueAt(currentRow, 1),
+											TupleType.TextField, true, null),
+									new Edit.Quadruple("initial_registration", table.getValueAt(currentRow, 2),
+											TupleType.dateTime, true, null),
+									new Edit.Quadruple("price_class", table.getValueAt(currentRow, 3),
+											TupleType.TextField, true, null),
+									new Edit.Quadruple("capacity", table.getValueAt(currentRow, 4), TupleType.TextField,
+											true, null),
+									new Edit.Quadruple("price_day", table.getValueAt(currentRow, 5),
+											TupleType.TextField, true, null),
+									new Edit.Quadruple("price_km", table.getValueAt(currentRow, 6), TupleType.TextField,
+											true, null),
+									new Edit.Quadruple("model", table.getValueAt(currentRow, 7), TupleType.TextField,
+											true, null),
+									new Edit.Quadruple("brand_id", table.getValueAt(currentRow, 8), TupleType.TextField,
+											true, null),
+									new Edit.Quadruple("insurance_id", table.getValueAt(currentRow, 9),
+											TupleType.TextField, true, null) });
 					break;
 				case "Extra_Equipment":
-					edit = new Edit(TableName.Extra_Equipment, id, new Edit.Quadruple[] {
-							new Edit.Quadruple("description", table.getValueAt(currentRow, 1), TupleType.TextField,
-									true),
-							new Edit.Quadruple("price", table.getValueAt(currentRow, 2), TupleType.TextField, true),
-							new Edit.Quadruple("total_quantity", table.getValueAt(currentRow, 3), TupleType.TextField,
-									true) });
+					edit = new Edit(TableName.Extra_Equipment, id,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("description", table.getValueAt(currentRow, 1),
+											TupleType.TextField, true, null),
+									new Edit.Quadruple("price", table.getValueAt(currentRow, 2), TupleType.TextField,
+											true, null),
+									new Edit.Quadruple("total_quantity", table.getValueAt(currentRow, 3),
+											TupleType.TextField, true, null) });
 					break;
 				case "Bills":
 					edit = new Edit(TableName.Bills, id, new Edit.Quadruple[] {
 							new Edit.Quadruple("payment_method", table.getValueAt(currentRow, 1), TupleType.TextField,
-									true),
-							new Edit.Quadruple("bill", table.getValueAt(currentRow, 2), TupleType.TextField, true),
-							new Edit.Quadruple("date", table.getValueAt(currentRow, 3), TupleType.date, true),
+									true, null),
+							new Edit.Quadruple("bill", table.getValueAt(currentRow, 2), TupleType.TextField, true,
+									null),
+							new Edit.Quadruple("date", table.getValueAt(currentRow, 3), TupleType.date, true, null),
 							new Edit.Quadruple("total_price", table.getValueAt(currentRow, 4), TupleType.TextField,
-									true),
-							new Edit.Quadruple("date_of_payment", table.getValueAt(currentRow, 5), TupleType.date,
-									true) });
+									true, null),
+							new Edit.Quadruple("date_of_payment", table.getValueAt(currentRow, 5), TupleType.date, true,
+									null) });
 					break;
 				}
 
 			}
 
 		});
-
 		panel.setLayout(gl_panel);
 
 	}
 
 	// creates the selected table table
 	private void setTableData(String whereField) {
-		String table = String.valueOf(comboBox_1.getSelectedItem());
+		String table = String.valueOf(comboBox_Table.getSelectedItem());
+		String field = String.valueOf(comboBox.getSelectedItem());
 		String sql = "";
 		switch (table) {
 		case "Clients":
@@ -353,19 +403,28 @@ public class Main {
 			sql = "Select license_plate, initial_registration, price_class, capacity, price_day, price_km, model, b.company_name, i.company_name from vehicles v inner join car_brands b on b.car_brands_id = v.car_brands_id inner join insurances i on i.insurances_id = v.insurances_id";
 			break;
 		case "Reservations_Damages":
-			sql = "select d.damages_id, r.reservations_id, d.description, d.position_part, fine, r.license_plate, c.first_name, c.last_name from reservations_damages rd inner join damages d on rd.damages_id = d.damages_id inner join reservations r on rd.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id";
+			sql = "select d.damages_id, r.reservations_id, d.description, fine, r.license_plate, c.first_name, c.last_name from reservations_damages rd inner join damages d on rd.damages_id = d.damages_id inner join reservations r on rd.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id";
 			break;
 		case "Reservations_Extraequipment":
-			sql = "select e.extra_equipment_id, r.reservations_id, e.description, quantity, r.license_plate, c.first_name, c.last_name from reservations_extraequipment re inner join extra_equipment e on re.extra_equipment_id = e.extra_equipment_id inner join reservations r on re.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id";
+			sql = "select e.extra_equipments_id, r.reservations_id, e.description, quantity, r.license_plate, c.first_name, c.last_name from reservations_extraequipment re inner join extra_equipment e on re.extra_equipments_id = e.extra_equipments_id inner join reservations r on re.reservations_id = r.reservations_id inner join clients c on r.clients_id = c.clients_id";
 			break;
 		case "Vehicles_Equipment":
-			sql = "select license_plate, e.equiptment_id, e.description from vehicles_equipment v inner join equipment e on v.equipment_id = e.equipment_id";
+			sql = "select license_plate, e.equipments_id, e.description from vehicles_equipment v inner join equipment e on v.equipments_id = e.equipments_id";
 			break;
 		default:
 			sql = "Select * from " + table;
 		}
 		if (whereField != null && whereField.trim().length() > 0) {
-			sql += " where " + table + "='" + whereField + "';";
+			try {
+				Integer.parseInt(whereField);
+				sql += " where " + field + " ~ '^" + whereField + "';";
+				// regex geaht net porco2
+				// geaht net wenn davor zb rs. stian muas: -> rs.whereField
+				System.out.println(sql);
+			} catch (NumberFormatException e) {
+				sql += " where lower(" + field + ") like lower('" + whereField + "%');";
+			}
+
 		} else
 			sql += ";";
 

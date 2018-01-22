@@ -4,6 +4,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Externalizable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -40,19 +43,21 @@ public class Edit extends JDialog {
 	// enum that contains all information about a single column
 	public static class Quadruple {
 		public enum TupleType {
-			TextField, date, dateTime, TextFieldInt
+			TextField, date, dateTime, TextFieldInt, ComboBox
 		};
 
 		private String Key;
 		private TupleType Type;
 		private Object Value;
 		private boolean Obligatory;
+		private TableName extraTable;
 
-		public Quadruple(String key, Object value, TupleType tupleType, boolean obligatory) {
+		public Quadruple(String key, Object value, TupleType tupleType, boolean obligatory, TableName extraTable) {
 			this.Key = key;
 			this.Value = value;
 			this.Type = tupleType;
 			this.Obligatory = obligatory;
+			this.extraTable = extraTable;
 		}
 	}
 
@@ -65,9 +70,8 @@ public class Edit extends JDialog {
 	private int id;
 
 	public enum TableName {
-		Reservations, Car_Brands, Vehicles, Insurances, Damages, Extra_Equipment, Equipment, Bills, Addresses, 
-		Clients, Reservations_Damages, Reservations_Extraequipment, Vehicles_Equipment
-		}
+		Reservations, Car_Brands, Vehicles, Insurances, Damages, Extra_Equipment, Equipment, Bills, Addresses, Clients, Reservations_Damages, Reservations_Extraequipment, Vehicles_Equipment
+	}
 
 	public Edit(TableName tableName, int id, Quadruple[] tuples) {
 		this.tableName = tableName;
@@ -80,12 +84,35 @@ public class Edit extends JDialog {
 			content.add(label);
 
 			Object obj = null;
+			switch (tuple.Type) {
+			case TextField:
+			case TextFieldInt:
+			case date:
+			case dateTime:
+				obj = new JTextField();
+				if (id >= 0)
+					((JTextField) obj).setText(tuple.Value.toString());
+				content.add((JTextField) obj);
+				break;
+			case ComboBox:
+				obj = new JComboBox();
+				if (id >= 0) {
 
-			obj = new JTextField();
-			if (id >= 0)
-				((JTextField) obj).setText(tuple.Value.toString());
-			content.add((JTextField) obj);
-
+				} else {					
+					String sql = "Select " + tuple.Key + " from " + tuple.extraTable;
+					db = new Database();
+					ResultSet rs = db.getData(sql);
+					try {
+						while(rs.next()) 
+						((JComboBox) obj).addItem(rs.getObject(tuple.Key));
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}					
+					content.add((JComboBox) obj);				
+				}				
+				break;
+			}
+			
 			result.put(tuple.Key, obj);
 		}
 
@@ -117,9 +144,24 @@ public class Edit extends JDialog {
 						String key = pair.getKey().toString();
 						String obj = "";
 						for (Quadruple tuple : tuples) {
-							if (tuple.Key == key) {
-								obj = ((JTextField) pair.getValue()).getText();
+							switch (tuple.Type) {
+							case TextField:
+							case TextFieldInt:
+							case date:
+							case dateTime:
+								if (tuple.Key == key) {
+									obj = ((JTextField) pair.getValue()).getText();
+								}
+								break;
+							case ComboBox:
+								if (tuple.Key == key) {
+									obj = ((JComboBox) pair.getValue()).getSelectedItem().toString();
+									//eppes wia Select id from table where description = scratch front left door
+								}
+								break;
 							}
+							
+							
 						}
 						sql += "'" + obj + "', ";
 					}
@@ -228,12 +270,13 @@ public class Edit extends JDialog {
 				try {
 					SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
 					format.parse(input);
-//					DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//					LocalDate localDate = LocalDate.now();
-//					if((Integer.parseInt(input)) > Integer.parseInt(dtf.format(localDate))) {
-//						JOptionPane.showMessageDialog(null, "Date can't be higher than current date!", "Error", JOptionPane.ERROR_MESSAGE);
-//						return false;
-//					}
+					// DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+					// LocalDate localDate = LocalDate.now();
+					// if((Integer.parseInt(input)) > Integer.parseInt(dtf.format(localDate))) {
+					// JOptionPane.showMessageDialog(null, "Date can't be higher than current
+					// date!", "Error", JOptionPane.ERROR_MESSAGE);
+					// return false;
+					// }
 				} catch (ParseException e) {
 					JOptionPane.showMessageDialog(null, "Date Format: yyyy-mm-dd!", "Error", JOptionPane.ERROR_MESSAGE);
 					return false;

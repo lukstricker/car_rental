@@ -3,12 +3,12 @@
 *                   Philipp Scomparin 14109, Philipp.Scomparin@stud-inf.unibz.it
 */ 
 
-INSERT into Damages (damages_id, description, position_part)
-    VALUES (1, 'scratch', 'Front Left Door'),
-        (2, 'scratch', 'Front Right Door'),
-        (3, 'scratch', 'Back Left Door'),
-        (4, 'scratch', 'Back Right Door'),
-        (5, 'Flat Tyre', 'Front Left Wheel');
+INSERT into Damages (damages_id, description)
+    VALUES (1, 'scratch Front Left Door'),
+        (2, 'scratch Front Right Door'),
+        (3, 'scratch Back Left Door'),
+        (4, 'scratch Back Right Door'),
+        (5, 'Flat Tyre Front Left Wheel');
 
 INSERT into Car_Brands (car_brands_id, company_name)
     VALUES (1, 'Volkswagen'),
@@ -32,13 +32,13 @@ INSERT into Addresses (addresses_id, city, cap, street, country)
         (3, 'Munich', 10294, 'Vogelwildstr. 34/A', 'DE');
 
 
-insert into Equipment (equipment_id, description)
+insert into Equipment (equipments_id, description)
     VALUES (1, 'ABS'),
         (2, 'Air conditioner'),
         (3, 'Automatic gearbox'),
         (4, 'Manual gearbox');
 
-insert into Extra_Equipment(extra_equipment_id, description, price, total_quantity)
+insert into Extra_Equipment(extra_equipments_id, description, price, total_quantity)
     VALUES (1, 'Child seat', 50, 1),
         (2, 'roof rack', 70, 2),
         (3, 'Navigation System', 79, 3);
