@@ -4,7 +4,6 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
-import java.awt.BorderLayout;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.GroupLayout;
@@ -13,13 +12,7 @@ import javax.swing.JLabel;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
@@ -47,9 +40,12 @@ public class Main {
 			TableName.Reservations_Extraequipment, TableName.Vehicles_Equipment };
 
 	private JComboBox comboBox_Table = new JComboBox(tables);
-	private JComboBox comboBox = new JComboBox();
+	private JComboBox comboBox_Search = new JComboBox();
+	
 	private Edit edit;
 	private JButton btnAdd, btnEdit, btnDelete;
+	
+	
 
 	/**
 	 * Launch the application.
@@ -176,7 +172,7 @@ public class Main {
 								.addGap(18)
 								.addComponent(textField, GroupLayout.PREFERRED_SIZE, 152, GroupLayout.PREFERRED_SIZE)
 								.addGap(18)
-								.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, 121, GroupLayout.PREFERRED_SIZE)
+								.addComponent(comboBox_Search, GroupLayout.PREFERRED_SIZE, 121, GroupLayout.PREFERRED_SIZE)
 								.addGap(18).addComponent(btnSearch)))
 				.addContainerGap()));
 		gl_panel.setVerticalGroup(gl_panel.createParallelGroup(Alignment.LEADING)
@@ -185,7 +181,7 @@ public class Main {
 								.addComponent(comboBox_Table, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
 										GroupLayout.PREFERRED_SIZE)
 								.addComponent(textField, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE)
-								.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+								.addComponent(comboBox_Search, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
 										GroupLayout.PREFERRED_SIZE)
 								.addComponent(btnSearch))
 						.addGap(31)
@@ -251,6 +247,17 @@ public class Main {
 									new Edit.Quadruple("brand_id", null, TupleType.TextField, true, null),
 									new Edit.Quadruple("insurance_id", null, TupleType.TextField, true, null) });
 					break;
+				case "Reservations":
+					edit = new Edit(TableName.Reservations, -1,
+							new Edit.Quadruple[] {
+									new Edit.Quadruple("date_starttime", null, TupleType.dateTime, true, null),
+									new Edit.Quadruple("date_endtime", null, TupleType.dateTime, true, null),
+									new Edit.Quadruple("km_at_start", null, TupleType.TextFieldInt, true, null),
+									new Edit.Quadruple("license_plate", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("clients_id", null, TupleType.TextField, true, null),
+									new Edit.Quadruple("bills_id", null, TupleType.TextField, true, null),
+				});
+					break;
 				case "Extra_Equipment":
 					edit = new Edit(TableName.Extra_Equipment, -1,
 							new Edit.Quadruple[] {
@@ -288,7 +295,7 @@ public class Main {
 											TableName.Extra_Equipment),
 									new Edit.Quadruple("reservations_id", null, TupleType.ComboBox, false,
 											TableName.Reservations),
-									new Edit.Quadruple("quantity", null, TupleType.TextField, true, null) });
+									new Edit.Quadruple("quantity", null, TupleType.TextFieldInt, true, null) });
 					break;
 				case "Vehicles_Equipment":
 					edit = new Edit(TableName.Vehicles_Equipment, -1, new Edit.Quadruple[] {
@@ -361,19 +368,19 @@ public class Main {
 							new Edit.Quadruple[] {
 									new Edit.Quadruple("description", table.getValueAt(currentRow, 1),
 											TupleType.TextField, true, null),
-									new Edit.Quadruple("price", table.getValueAt(currentRow, 2), TupleType.TextField,
+									new Edit.Quadruple("price", table.getValueAt(currentRow, 2), TupleType.TextFieldInt,
 											true, null),
 									new Edit.Quadruple("total_quantity", table.getValueAt(currentRow, 3),
-											TupleType.TextField, true, null) });
+											TupleType.TextFieldInt, true, null) });
 					break;
 				case "Bills":
 					edit = new Edit(TableName.Bills, id, new Edit.Quadruple[] {
 							new Edit.Quadruple("payment_method", table.getValueAt(currentRow, 1), TupleType.TextField,
 									true, null),
-							new Edit.Quadruple("bill", table.getValueAt(currentRow, 2), TupleType.TextField, true,
+							new Edit.Quadruple("bill", table.getValueAt(currentRow, 2), TupleType.TextFieldInt, true,
 									null),
 							new Edit.Quadruple("date", table.getValueAt(currentRow, 3), TupleType.date, true, null),
-							new Edit.Quadruple("total_price", table.getValueAt(currentRow, 4), TupleType.TextField,
+							new Edit.Quadruple("total_price", table.getValueAt(currentRow, 4), TupleType.TextFieldInt,
 									true, null),
 							new Edit.Quadruple("date_of_payment", table.getValueAt(currentRow, 5), TupleType.date, true,
 									null) });
@@ -390,7 +397,7 @@ public class Main {
 	// creates the selected table table
 	private void setTableData(String whereField) {
 		String table = String.valueOf(comboBox_Table.getSelectedItem());
-		String field = String.valueOf(comboBox.getSelectedItem());
+		String field = String.valueOf(comboBox_Search.getSelectedItem());
 		String sql = "";
 		switch (table) {
 		case "Clients":
@@ -419,7 +426,7 @@ public class Main {
 				Integer.parseInt(whereField);
 				sql += " where " + field + " ~ '^" + whereField + "';";
 				// regex geaht net porco2
-				// geaht net wenn davor zb rs. stian muas: -> rs.whereField
+				// und suche geaht net wenn davor zb rs. stian muas: -> rs.whereField
 				System.out.println(sql);
 			} catch (NumberFormatException e) {
 				sql += " where lower(" + field + ") like lower('" + whereField + "%');";
@@ -432,12 +439,14 @@ public class Main {
 			DefaultTableModel data = Utilities.loadAllData(sql);
 			this.tableModel = data;
 			this.table.setModel(this.tableModel);
-			comboBox.removeAllItems();
+			comboBox_Search.removeAllItems();
 			for (int i = 0; i < data.getColumnCount(); i++) {
-				comboBox.addItem(data.getColumnName(i));
+				comboBox_Search.addItem(data.getColumnName(i));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
+	
+	
 }

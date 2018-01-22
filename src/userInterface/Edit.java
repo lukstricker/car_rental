@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,9 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.swing.*;
-
 import userInterface.Edit.Quadruple.TupleType;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -68,6 +67,20 @@ public class Edit extends JDialog {
 	private Quadruple[] tuples;
 	private Database db;
 	private int id;
+	private JComboBox<Month> cbMonth;
+	private JComboBox<String> cbYear;
+	private JComboBox<String> cbDay;
+
+	private enum Month {
+		SELECT(-1), JANUARY(1), FEBRUARY(2), MARCH(3), APRIL(4), MAY(5), JUNE(6), JULY(7), AUGUST(8), SEPTEMBER(
+				9), OCTOBER(10), NOVEMBER(11), DECEMBER(12);
+		private final int value;
+
+		private Month(int value) {
+			this.value = value;
+		}
+
+	}
 
 	public enum TableName {
 		Reservations, Car_Brands, Vehicles, Insurances, Damages, Extra_Equipment, Equipment, Bills, Addresses, Clients, Reservations_Damages, Reservations_Extraequipment, Vehicles_Equipment
@@ -87,7 +100,6 @@ public class Edit extends JDialog {
 			switch (tuple.Type) {
 			case TextField:
 			case TextFieldInt:
-			case date:
 			case dateTime:
 				obj = new JTextField();
 				if (id >= 0)
@@ -98,21 +110,48 @@ public class Edit extends JDialog {
 				obj = new JComboBox();
 				if (id >= 0) {
 
-				} else {					
+				} else {
 					String sql = "Select " + tuple.Key + " from " + tuple.extraTable;
 					db = new Database();
 					ResultSet rs = db.getData(sql);
 					try {
-						while(rs.next()) 
-						((JComboBox) obj).addItem(rs.getObject(tuple.Key));
+						while (rs.next())
+							((JComboBox) obj).addItem(rs.getObject(tuple.Key));
 					} catch (SQLException e) {
 						e.printStackTrace();
-					}					
-					content.add((JComboBox) obj);				
-				}				
+					}
+					content.add((JComboBox) obj);
+				}
 				break;
-			}
-			
+			case date:
+				obj = new String();
+				cbYear = new JComboBox<String>();
+				cbYear.addItem("SELECT");
+				for (int i = Year.now().getValue(); i >= 1900; i--)
+					cbYear.addItem(String.valueOf(i));
+				cbMonth = new JComboBox<Month>();
+				cbMonth.setModel(new DefaultComboBoxModel<Month>(Month.values()));
+				cbDay = new JComboBox<String>();
+				cbDay.addItem("SELECT");
+				for (int i = 1; i <= 31; i++) {
+					cbDay.addItem(String.valueOf(String.format("%02d", i)));
+				}
+
+				content.add(cbYear);
+				content.add(cbMonth);
+				content.add(cbDay);	
+				
+				//HILFEEEEEEEEEEEEEEE wia tua i dasses erst beim ok feld check mocht ober in result decht innischreib bei obj			
+				obj = cbYear.getSelectedItem() + "-" + cbMonth.getSelectedItem() + "-" + cbDay.getSelectedItem();
+				System.out.println(obj);
+				
+				try {
+					obj = parseDateOfBirth();
+					System.out.println(obj);
+				} catch (Exception e) {
+					System.out.println("exception lol");
+				}			}
+
 			result.put(tuple.Key, obj);
 		}
 
@@ -147,7 +186,7 @@ public class Edit extends JDialog {
 							switch (tuple.Type) {
 							case TextField:
 							case TextFieldInt:
-							case date:
+
 							case dateTime:
 								if (tuple.Key == key) {
 									obj = ((JTextField) pair.getValue()).getText();
@@ -156,12 +195,13 @@ public class Edit extends JDialog {
 							case ComboBox:
 								if (tuple.Key == key) {
 									obj = ((JComboBox) pair.getValue()).getSelectedItem().toString();
-									//eppes wia Select id from table where description = scratch front left door
+									// eppes wia Select id from table where description = scratch front left door
 								}
 								break;
+							case date:
+
 							}
-							
-							
+
 						}
 						sql += "'" + obj + "', ";
 					}
@@ -240,10 +280,21 @@ public class Edit extends JDialog {
 		for (Quadruple tuple : tuples) {
 			Object obj = result.get(tuple.Key);
 			if (tuple.Obligatory) {
-				if (((JTextField) obj).getText().trim().length() == 0) {
-					JOptionPane.showMessageDialog(null, "Please fill all mandatory fields out!", "Error",
-							JOptionPane.ERROR_MESSAGE);
-					return false;
+				switch (tuple.Type) {
+				case TextField:
+				case TextFieldInt:
+					if (((JTextField) obj).getText().trim().length() == 0) {
+						JOptionPane.showMessageDialog(null, "Please fill all mandatory fields out!", "Error",
+								JOptionPane.ERROR_MESSAGE);
+						return false;
+					}
+					break;
+				case date:
+					if (!checkComboBoxes()) {
+						JOptionPane.showMessageDialog(null, "Please fill all mandatory fields out!", "Error",
+								JOptionPane.ERROR_MESSAGE);
+						return false;
+					}
 				}
 			}
 			if (tuple.Type == TupleType.TextFieldInt) {
@@ -265,25 +316,42 @@ public class Edit extends JDialog {
 					return false;
 				}
 			}
-			if (tuple.Type == TupleType.date) {
-				String input = ((JTextField) obj).getText();
-				try {
-					SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
-					format.parse(input);
-					// DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-					// LocalDate localDate = LocalDate.now();
-					// if((Integer.parseInt(input)) > Integer.parseInt(dtf.format(localDate))) {
-					// JOptionPane.showMessageDialog(null, "Date can't be higher than current
-					// date!", "Error", JOptionPane.ERROR_MESSAGE);
-					// return false;
-					// }
-				} catch (ParseException e) {
-					JOptionPane.showMessageDialog(null, "Date Format: yyyy-mm-dd!", "Error", JOptionPane.ERROR_MESSAGE);
-					return false;
-				}
-			}
 		}
 		return true;
+	}
+
+	private boolean checkComboBoxes() {
+		if (!((cbDay.getSelectedIndex() == 0 && cbMonth.getSelectedIndex() == 0 && cbYear.getSelectedIndex() == 0)
+				|| (cbDay.getSelectedIndex() != 0 && cbMonth.getSelectedIndex() != 0
+						&& cbYear.getSelectedIndex() != 0))) {
+			return false;
+		}
+		return true;
+	}
+
+	private String parseDateOfBirth() throws Exception {
+
+		if (cbDay.getSelectedIndex() == 0 || cbMonth.getSelectedIndex() == 0 || cbYear.getSelectedIndex() == 0) {
+			return null;
+		} else {
+			String day = this.cbDay.getSelectedItem().toString();
+			String month = String.valueOf(((Month) this.cbMonth.getSelectedItem()).value);
+			String year = this.cbYear.getSelectedItem().toString();
+			if (Integer.valueOf(month) == 2 && Integer.valueOf(day) > 29)
+				throw new Exception("February has only 27/28 days.");
+			if (Integer.valueOf(month) == 2 && Integer.valueOf(day) == 29
+					&& (Integer.valueOf(year) % 4 != 0 || (year.endsWith("00") && Integer.valueOf(year) % 400 != 0)))
+				throw new Exception("The selected year is not a leap year and therefore the february has not 29 days.");
+			if ((Integer.valueOf(month) == 4 || Integer.valueOf(month) == 6 || Integer.valueOf(month) == 9
+					|| Integer.valueOf(month) == 11) && Integer.valueOf(day) > 30)
+				throw new Exception("The selected month has only 30 days.");
+
+			if (day.length() != 2)
+				day = "0" + day;
+			if (month.length() != 2)
+				month = "0" + month;
+			return year + "-" + month + "-" + day;
+		}
 	}
 
 }
