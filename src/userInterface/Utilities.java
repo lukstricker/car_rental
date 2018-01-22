@@ -109,12 +109,6 @@ public class Utilities {
 		return rows;
 	}
 
-	public static void updateTableHeader(JTable table) {
-		JTableHeader th = table.getTableHeader();
-		TableColumnModel tcm = th.getColumnModel();
-		TableColumn tc = tcm.getColumn(0);
-		tc.setHeaderValue("???");
-		th.repaint();
-	}
+	
 
 }
