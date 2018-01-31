@@ -18,26 +18,32 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxUI.ComboBoxLayoutManager;
+
+import org.postgresql.util.PSQLException;
+
 import userInterface.Edit.Quadruple.TupleType;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.HeadlessException;
 
 public class Edit extends JDialog {
 
-	// public static class Tuple {
-	// public enum TupleType {
-	// TextField, TextArea, dateTime
-	// };
-	//
-	// private String Key;
-	// private TupleType Type;
-	//
-	// public Tuple(String key, TupleType tupleType) {
-	// this.Key = key;
-	// this.Type = tupleType;
-	// }
-	// }
+	public static class ComboBoxItem {
+		private String ID;
+		private String Value;
+
+		public ComboBoxItem(String id, String value) {
+			this.ID = id;
+			this.Value = value;
+		}
+
+		@Override
+		public String toString() {
+			return this.Value;
+		}
+	}
 
 	// enum that contains all information about a single column
 	public static class Quadruple {
@@ -45,14 +51,15 @@ public class Edit extends JDialog {
 			TextField, date, dateTime, TextFieldInt, ComboBox
 		};
 
-		private String Key;
+		private String ColumnName;
 		private TupleType Type;
 		private Object Value;
 		private boolean Obligatory;
 		private TableName extraTable;
 
-		public Quadruple(String key, Object value, TupleType tupleType, boolean obligatory, TableName extraTable) {
-			this.Key = key;
+		public Quadruple(String columnName, Object value, TupleType tupleType, boolean obligatory,
+				TableName extraTable) {
+			this.ColumnName = columnName;
 			this.Value = value;
 			this.Type = tupleType;
 			this.Obligatory = obligatory;
@@ -66,10 +73,7 @@ public class Edit extends JDialog {
 	private JButton btnOK, btnCancel;
 	private Quadruple[] tuples;
 	private Database db;
-	private int id;
-	private JComboBox<Month> cbMonth;
-	private JComboBox<String> cbYear;
-	private JComboBox<String> cbDay;
+	private String id;
 
 	private enum Month {
 		SELECT(-1), JANUARY(1), FEBRUARY(2), MARCH(3), APRIL(4), MAY(5), JUNE(6), JULY(7), AUGUST(8), SEPTEMBER(
@@ -86,14 +90,14 @@ public class Edit extends JDialog {
 		Reservations, Car_Brands, Vehicles, Insurances, Damages, Extra_Equipment, Equipment, Bills, Addresses, Clients, Reservations_Damages, Reservations_Extraequipment, Vehicles_Equipment
 	}
 
-	public Edit(TableName tableName, int id, Quadruple[] tuples) {
+	public Edit(TableName tableName, String id, Quadruple[] tuples) {
 		this.tableName = tableName;
 		this.tuples = tuples;
 		this.id = id;
 		this.SetLayout();
 
 		for (Quadruple tuple : tuples) {
-			JLabel label = new JLabel(tuple.Key + ":");
+			JLabel label = new JLabel(tuple.ColumnName + ":");
 			content.add(label);
 
 			Object obj = null;
@@ -102,61 +106,97 @@ public class Edit extends JDialog {
 			case TextFieldInt:
 			case dateTime:
 				obj = new JTextField();
-				if (id >= 0)
-					((JTextField) obj).setText(tuple.Value.toString());
+				if (id != null)
+					if (tuple.Value == null)
+						((JTextField) obj).setText("");
+					else
+						((JTextField) obj).setText(tuple.Value.toString());
 				content.add((JTextField) obj);
 				break;
 			case ComboBox:
 				obj = new JComboBox();
-				if (id >= 0) {
-
-				} else {
-					String sql = "Select " + tuple.Key + " from " + tuple.extraTable;
-					db = new Database();
-					ResultSet rs = db.getData(sql);
-					try {
-						while (rs.next())
-							((JComboBox) obj).addItem(rs.getObject(tuple.Key));
-					} catch (SQLException e) {
-						e.printStackTrace();
+				ArrayList<ComboBoxItem> items = new ArrayList<ComboBoxItem>();
+				String columnNameID = tuple.extraTable + "_id";
+				if (tuple.extraTable == TableName.Vehicles)
+					columnNameID = "license_plate";
+				String sql = "Select " + columnNameID + ", " + tuple.ColumnName + " from " + tuple.extraTable;
+				System.out.println(sql);
+				db = new Database();
+				ResultSet rs = db.getData(sql);
+				try {
+					while (rs.next()) {
+						ComboBoxItem item = new ComboBoxItem(rs.getObject(columnNameID).toString(),
+								rs.getObject(tuple.ColumnName).toString());
+						items.add(item);
+						((JComboBox) obj).addItem(item);
 					}
-					content.add((JComboBox) obj);
+				} catch (SQLException e) {
+					e.printStackTrace();
 				}
+				if (id != null) {
+					for (int i = 0; i < items.size(); i++) {
+						if (items.get(i).Value.equals(tuple.Value.toString())) {
+							((JComboBox) obj).setSelectedIndex(i);
+							break;
+						}
+					}
+				}
+				content.add((JComboBox) obj);
 				break;
 			case date:
-				obj = new String();
-				cbYear = new JComboBox<String>();
+				obj = new ArrayList<JComboBox>();
+
+				JComboBox cbYear = new JComboBox();
 				cbYear.addItem("SELECT");
 				for (int i = Year.now().getValue(); i >= 1900; i--)
 					cbYear.addItem(String.valueOf(i));
-				cbMonth = new JComboBox<Month>();
+				((ArrayList<JComboBox>) obj).add(cbYear);
+				JComboBox cbMonth = new JComboBox();
 				cbMonth.setModel(new DefaultComboBoxModel<Month>(Month.values()));
-				cbDay = new JComboBox<String>();
+				((ArrayList<JComboBox>) obj).add(cbMonth);
+				JComboBox cbDay = new JComboBox();
 				cbDay.addItem("SELECT");
 				for (int i = 1; i <= 31; i++) {
 					cbDay.addItem(String.valueOf(String.format("%02d", i)));
 				}
+				((ArrayList<JComboBox>) obj).add(cbDay);
+
+				if (id != null) {
+					Object date = tuple.Value;
+					if (date != null && !date.toString().trim().equals("")) {
+						String[] parts = date.toString().split("-");
+						if (parts.length == 3) {
+							String year = parts[0];
+							int month = Integer.parseInt(parts[1]);
+							String day = parts[2];
+							for (int i = 0; i < cbYear.getModel().getSize(); i++) {
+								if (year.equals(cbYear.getModel().getElementAt((i)))) {
+									cbYear.setSelectedIndex(i);
+									break;
+								}
+							}
+							cbMonth.setSelectedIndex(month);
+							for (int i = 0; i < cbDay.getModel().getSize(); i++) {
+								if (day.equals(cbDay.getModel().getElementAt((i)))) {
+									cbDay.setSelectedIndex(i);
+									break;
+								}
+							}
+						}
+					}
+				}
 
 				content.add(cbYear);
 				content.add(cbMonth);
-				content.add(cbDay);	
-				
-				//HILFEEEEEEEEEEEEEEE wia tua i dasses erst beim ok feld check mocht ober in result decht innischreib bei obj			
-				obj = cbYear.getSelectedItem() + "-" + cbMonth.getSelectedItem() + "-" + cbDay.getSelectedItem();
-				System.out.println(obj);
-				
-				try {
-					obj = parseDateOfBirth();
-					System.out.println(obj);
-				} catch (Exception e) {
-					System.out.println("exception lol");
-				}			}
-
-			result.put(tuple.Key, obj);
+				content.add(cbDay);
+				break;
+			}
+			result.put(tuple.ColumnName, obj);
 		}
 
 		this.btnOK.addActionListener(new ActionListener() {
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (!checkFields()) {
@@ -165,13 +205,22 @@ public class Edit extends JDialog {
 
 				db = new Database();
 
-				if (id == -1) {
+				if (id == null) {
 					String sql = "INSERT INTO " + tableName + " (";
 					Iterator it = result.entrySet().iterator();
 					// Schleife für Spalten-Namen
 					while (it.hasNext()) {
 						Map.Entry pair = (Map.Entry) it.next();
 						String key = pair.getKey().toString();
+						for (Quadruple tuple : tuples) {
+							if (tuple.ColumnName == key) {
+								if (tuple.Type == TupleType.ComboBox)
+									key = tuple.extraTable + "_id";
+								if (tuple.extraTable == TableName.Vehicles)
+									key = "license_plate";
+								break;
+							}
+						}
 						sql += key + ", ";
 					}
 					sql = sql.substring(0, sql.length() - 2);
@@ -181,32 +230,43 @@ public class Edit extends JDialog {
 					while (it.hasNext()) {
 						Map.Entry pair = (Map.Entry) it.next();
 						String key = pair.getKey().toString();
-						String obj = "";
+						String value = "";
 						for (Quadruple tuple : tuples) {
-							switch (tuple.Type) {
-							case TextField:
-							case TextFieldInt:
-
-							case dateTime:
-								if (tuple.Key == key) {
-									obj = ((JTextField) pair.getValue()).getText();
+							if (tuple.ColumnName == key) {
+								switch (tuple.Type) {
+								case TextField:
+								case TextFieldInt:
+									value = ((JTextField) pair.getValue()).getText();
+									break;
+								case ComboBox:
+									value = ((ComboBoxItem) ((JComboBox) pair.getValue()).getSelectedItem()).ID;
+									break;
+								case date:
+									try {
+										value = parseDateComboBoxes((ArrayList<JComboBox>) pair.getValue());
+									} catch (Exception e) {
+										JOptionPane.showMessageDialog(null, e.getMessage(), "Error",
+												JOptionPane.ERROR_MESSAGE);
+										return;
+									}
+									break;
+								case dateTime:
+									if (checkDateTime(((JTextField) pair.getValue()).getText()) == false) {
+										JOptionPane.showMessageDialog(null, "Date Time Format: YYYY-MM-DD HH:MM:SS",
+												"Error", JOptionPane.ERROR_MESSAGE);
+										return;
+									}
+									value = ((JTextField) pair.getValue()).getText();
+									break;
 								}
 								break;
-							case ComboBox:
-								if (tuple.Key == key) {
-									obj = ((JComboBox) pair.getValue()).getSelectedItem().toString();
-									// eppes wia Select id from table where description = scratch front left door
-								}
-								break;
-							case date:
-
 							}
-
 						}
-						sql += "'" + obj + "', ";
+						sql += "'" + value + "', ";
 					}
 					sql = sql.substring(0, sql.length() - 2);
 					sql += ");";
+					System.out.println(sql);
 					if (!db.insertData(sql)) {
 						JOptionPane.showMessageDialog(null, "Unable to save data!", "Error", JOptionPane.ERROR_MESSAGE);
 					} else
@@ -217,20 +277,68 @@ public class Edit extends JDialog {
 
 					String sql = "Update " + tableName + " set ";
 					Iterator it = result.entrySet().iterator();
-
 					while (it.hasNext()) {
 						Map.Entry pair = (Map.Entry) it.next();
 						String key = pair.getKey().toString();
-						String obj = "";
+						String value = "";
 						for (Quadruple tuple : tuples) {
-							if (tuple.Key == key)
-								obj = ((JTextField) pair.getValue()).getText();
+							if (tuple.ColumnName == key) {
+								switch (tuple.Type) {
+								case TextField:
+								case TextFieldInt:
+								case dateTime:
+									value = ((JTextField) pair.getValue()).getText();
+									break;
+								case ComboBox:
+									key = tuple.extraTable + "_id";
+									if (tuple.extraTable == TableName.Vehicles)
+										key = "license_plate";
+									value = ((ComboBoxItem) ((JComboBox) pair.getValue()).getSelectedItem()).ID;
+									break;
+								case date:
+									try {
+										value = parseDateComboBoxes((ArrayList<JComboBox>) pair.getValue());
+									} catch (Exception e) {
+										JOptionPane.showMessageDialog(null, e.getMessage(), "Error",
+												JOptionPane.ERROR_MESSAGE);
+										return;
+									}
+									break;
+								}
+								break;
+							}
 						}
-						sql += key + "='" + obj + "', ";
+						sql += key + "='" + value + "', ";
 					}
 					sql = sql.substring(0, sql.length() - 2);
-					sql += " Where " + tableName.toString().toLowerCase() + "_id" + "=" + id;
+					String whereString = tableName.toString().toLowerCase() + "_id" + "=" + id;
+					if (tableName == TableName.Vehicles) {
+						whereString = "license_plate = '" + id + "'";
+					} else if (tableName == TableName.Reservations_Damages) {
+						for (Quadruple tuple : tuples) {
+							if (tuple.ColumnName.toLowerCase().equals("reservations_id")) {
+								whereString = "damages_id = " + id + " and reservations_id = " + tuple.Value;
+								break;
+							}
+						}
+					} else if (tableName == TableName.Reservations_Extraequipment) {
+						for (Quadruple tuple : tuples) {
+							if (tuple.ColumnName.toLowerCase().equals("reservations_id")) {
+								whereString = "reservations_extraequipment_id = " + id + " and reservations_id = "
+										+ tuple.Value;
+								break;
+							}
+						}
+					} else if (tableName == TableName.Vehicles_Equipment) {
+						for (Quadruple tuple : tuples)
+							if (tuple.ColumnName.toLowerCase().equals("license_plate")) {
+								whereString = "equipment_id = " + id + " and license_plate = '" + tuple.Value + "'";
+								break;
+							}
+					}
 
+					sql += " Where " + whereString;
+					System.out.println(sql);
 					if (!db.updateData(sql)) {
 						JOptionPane.showMessageDialog(null, "Unable to save data!", "Error", JOptionPane.ERROR_MESSAGE);
 					} else
@@ -266,7 +374,7 @@ public class Edit extends JDialog {
 		});
 		footer.add(btnCancel);
 
-		if (id > 0) {
+		if (id != null) {
 			this.setTitle("Modify " + tableName);
 		} else
 			this.setTitle("Add " + tableName);
@@ -278,7 +386,7 @@ public class Edit extends JDialog {
 
 	private boolean checkFields() {
 		for (Quadruple tuple : tuples) {
-			Object obj = result.get(tuple.Key);
+			Object obj = result.get(tuple.ColumnName);
 			if (tuple.Obligatory) {
 				switch (tuple.Type) {
 				case TextField:
@@ -290,11 +398,21 @@ public class Edit extends JDialog {
 					}
 					break;
 				case date:
-					if (!checkComboBoxes()) {
+					try {
+						if (!checkDateComboBoxes((ArrayList<JComboBox>) obj)) {
+							JOptionPane.showMessageDialog(null, "Please fill all mandatory fields out!", "Error",
+									JOptionPane.ERROR_MESSAGE);
+							return false;
+
+						}
+					} catch (Exception e) {
 						JOptionPane.showMessageDialog(null, "Please fill all mandatory fields out!", "Error",
 								JOptionPane.ERROR_MESSAGE);
 						return false;
 					}
+				case dateTime:
+					// das macht Lukas
+					break;
 				}
 			}
 			if (tuple.Type == TupleType.TextFieldInt) {
@@ -305,38 +423,29 @@ public class Edit extends JDialog {
 					return false;
 				}
 			}
-			if (tuple.Type == TupleType.dateTime) {
-				String input = ((JTextField) obj).getText();
-				try {
-					SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd HH:MM:SS");
-					format.parse(input);
-				} catch (ParseException e) {
-					JOptionPane.showMessageDialog(null, "Date - Time Format: yyyy-mm-dd HH:MM:SS!", "Error",
-							JOptionPane.ERROR_MESSAGE);
-					return false;
-				}
-			}
 		}
 		return true;
 	}
 
-	private boolean checkComboBoxes() {
-		if (!((cbDay.getSelectedIndex() == 0 && cbMonth.getSelectedIndex() == 0 && cbYear.getSelectedIndex() == 0)
-				|| (cbDay.getSelectedIndex() != 0 && cbMonth.getSelectedIndex() != 0
-						&& cbYear.getSelectedIndex() != 0))) {
+	private boolean checkDateTime(String value) {
+		System.out.println(value);
+		if (!value.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")) {
 			return false;
 		}
 		return true;
 	}
 
-	private String parseDateOfBirth() throws Exception {
-
+	private boolean checkDateComboBoxes(ArrayList<JComboBox> boxes) throws Exception {
+		JComboBox cbYear = boxes.get(0);
+		JComboBox cbMonth = boxes.get(1);
+		JComboBox cbDay = boxes.get(2);
 		if (cbDay.getSelectedIndex() == 0 || cbMonth.getSelectedIndex() == 0 || cbYear.getSelectedIndex() == 0) {
-			return null;
+			return false;
+
 		} else {
-			String day = this.cbDay.getSelectedItem().toString();
-			String month = String.valueOf(((Month) this.cbMonth.getSelectedItem()).value);
-			String year = this.cbYear.getSelectedItem().toString();
+			String day = cbDay.getSelectedItem().toString();
+			String month = String.valueOf(((Month) cbMonth.getSelectedItem()).value);
+			String year = cbYear.getSelectedItem().toString();
 			if (Integer.valueOf(month) == 2 && Integer.valueOf(day) > 29)
 				throw new Exception("February has only 27/28 days.");
 			if (Integer.valueOf(month) == 2 && Integer.valueOf(day) == 29
@@ -346,12 +455,29 @@ public class Edit extends JDialog {
 					|| Integer.valueOf(month) == 11) && Integer.valueOf(day) > 30)
 				throw new Exception("The selected month has only 30 days.");
 
-			if (day.length() != 2)
-				day = "0" + day;
-			if (month.length() != 2)
-				month = "0" + month;
-			return year + "-" + month + "-" + day;
+			return true;
 		}
+	}
+
+	private String parseDateComboBoxes(ArrayList<JComboBox> boxes) throws Exception {
+		if (!checkDateComboBoxes(boxes))
+			return "NULL";
+
+		JComboBox cbYear = boxes.get(0);
+		JComboBox cbMonth = boxes.get(1);
+		JComboBox cbDay = boxes.get(2);
+
+		String day = cbDay.getSelectedItem().toString();
+		String month = String.valueOf(((Month) cbMonth.getSelectedItem()).value);
+		String year = cbYear.getSelectedItem().toString();
+
+		if (day.length() != 2)
+			day = "0" + day;
+		if (month.length() != 2)
+			month = "0" + month;
+
+		return year + "-" + month + "-" + day;
+
 	}
 
 }

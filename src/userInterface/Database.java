@@ -78,10 +78,12 @@ public class Database {
 	
 	public boolean deleteData(String sql) {
 		try {
+			System.out.println(sql);
 			statement = connection.createStatement();
 			statement.executeUpdate(sql);
 			return true;
 		} catch (Exception e) {
+			e.printStackTrace();
 			return false;
 		}
 	}

@@ -18,10 +18,12 @@ public class Utilities {
 		db = new Database();
 		String sql = "Delete from " + tablename + " Where " + tablename + "_id = " + id + ";";
 		if (!db.deleteData(sql)) {
+			
 			JOptionPane.showMessageDialog(null, "Unable to delete data!", "Error", JOptionPane.ERROR_MESSAGE);
 		} else
 			JOptionPane.showMessageDialog(null, "Deleted successfully!");
-
+		
+		
 	}
 
 	/**
