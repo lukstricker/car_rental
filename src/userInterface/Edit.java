@@ -428,7 +428,6 @@ public class Edit extends JDialog {
 	}
 
 	private boolean checkDateTime(String value) {
-		System.out.println(value);
 		if (!value.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")) {
 			return false;
 		}

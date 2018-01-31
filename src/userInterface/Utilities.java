@@ -24,7 +24,7 @@ public class Utilities {
 		} else if(extraTable1 != null && extraTable2 != null) 
 			sql = "Delete from " + tablename + " Where " + extraTable1 + " = '" + Integer.parseInt((String) id1) + "' and " + extraTable2 + " = '" + Integer.parseInt((String) id2) + "';";
 		else 
-			sql = "Delete from " + tablename + " Where " + tablename + "_id = " + Integer.parseInt((String) id1) + ";";
+			sql = "Delete from " + tablename + " Where " + tablename + "_id = '" + id1 + "';";
 		if (!db.deleteData(sql)) {
 			
 			JOptionPane.showMessageDialog(null, "Unable to delete data!", "Error", JOptionPane.ERROR_MESSAGE);

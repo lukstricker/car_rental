@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.Vector;
 import java.util.logging.Level;
 
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 public class Database {
@@ -46,7 +47,7 @@ public class Database {
 			st.executeUpdate(sql);
 			return true;
 		} catch (SQLException e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Wrong input!", "Error", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 	}
@@ -72,18 +73,18 @@ public class Database {
 			ps.executeUpdate();
 			return true;
 		} catch (Exception e) {
+			JOptionPane.showMessageDialog(null, "Wrong input!", "Error", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 	}
 	
 	public boolean deleteData(String sql) {
 		try {
-			System.out.println(sql);
 			statement = connection.createStatement();
 			statement.executeUpdate(sql);
 			return true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Row cannot be deleted because foreign key attribute!", "Error", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 	}
