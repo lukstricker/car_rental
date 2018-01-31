@@ -15,7 +15,7 @@ CREATE table Car_Brands (
 
 CREATE table Insurances (
     insurances_id SERIAL primary key,
-    company_name varchar(60),
+    insurance_name varchar(60),
     fee integer DEFAULT 0
 );
 
@@ -75,21 +75,21 @@ CREATE table Reservations (
 );
 
 CREATE table Extra_Equipment (
-    extra_equipments_id SERIAL primary key,
+    extra_equipment_id SERIAL primary key,
     description varchar(80) NOT NULL,
     price integer DEFAULT 0,
     total_quantity integer DEFAULT 0
 );
 
 CREATE table Equipment (
-    equipments_id SERIAL primary key,
+    equipment_id SERIAL primary key,
     description varchar(50) NOT NULL
 );
 
 CREATE table Vehicles_Equipment (
     license_plate varchar(80) REFERENCES Vehicles(license_plate) on update CASCADE on delete CASCADE, --if the license_plate changes it should also change here and if a vehicle is deleted it should also be removed from this table.
-    equipments_id integer REFERENCES Equipment(equipments_id) on delete RESTRICT,
-    primary key(license_plate, equipments_id)
+    equipment_id integer REFERENCES Equipment(equipment_id) on delete RESTRICT,
+    primary key(license_plate, equipment_id)
 );
 
 CREATE table Reservations_Damages (
@@ -100,8 +100,8 @@ CREATE table Reservations_Damages (
 );
 
 CREATE table Reservations_ExtraEquipment (
-    extra_equipments_id integer REFERENCES Extra_Equipment(extra_equipments_id) on delete RESTRICT,
+    extra_equipment_id integer REFERENCES Extra_Equipment(extra_equipment_id) on delete RESTRICT,
     reservations_id integer REFERENCES Reservations(reservations_id) on delete RESTRICT,
     quantity integer NOT NULL,
-    primary key(extra_equipments_id, reservations_id)    
+    primary key(extra_equipment_id, reservations_id)    
 );

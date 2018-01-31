@@ -16,7 +16,7 @@ INSERT into Car_Brands (car_brands_id, company_name)
         (3, 'BMW'),
         (4, 'Lamborghini');
 
-INSERT into Insurances (insurances_id, company_name, fee)
+INSERT into Insurances (insurances_id, insurance_name, fee)
     VALUES (1, 'Allianz', '600'),
         (2, 'AXA', '1200'),
         (3, 'Tirolia', '460');
@@ -32,13 +32,13 @@ INSERT into Addresses (addresses_id, city, cap, street, country)
         (3, 'Munich', 10294, 'Vogelwildstr. 34/A', 'DE');
 
 
-insert into Equipment (equipments_id, description)
+insert into Equipment (equipment_id, description)
     VALUES (1, 'ABS'),
         (2, 'Air conditioner'),
         (3, 'Automatic gearbox'),
         (4, 'Manual gearbox');
 
-insert into Extra_Equipment(extra_equipments_id, description, price, total_quantity)
+insert into Extra_Equipment(extra_equipment_id, description, price, total_quantity)
     VALUES (1, 'Child seat', 50, 1),
         (2, 'roof rack', 70, 2),
         (3, 'Navigation System', 79, 3);
