@@ -9,6 +9,8 @@ import javax.swing.JPanel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,6 +28,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import org.postgresql.util.PSQLException;
 
 import userInterface.Edit.TableName;
 import userInterface.Edit.Quadruple.TupleType;
@@ -105,7 +109,13 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {
 				String text = textField.getText();
 				if (text != null && text.trim().length() > 0) {
-					setTableData(text);
+					try {
+						setTableData(text);
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(null, "Wrong input!", "Error",
+								JOptionPane.ERROR_MESSAGE);
+					}
+					
 				} else
 					setTableData(null);
 
@@ -126,8 +136,19 @@ public class Main {
 			public void actionPerformed(ActionEvent e) {
 				String currentTable = String.valueOf(comboBox_Table.getSelectedItem());
 				int currentRow = table.getSelectedRow();
-				int id = Integer.parseInt(table.getValueAt(currentRow, 0).toString());
-				Utilities.delete(id, currentTable.toLowerCase());
+				if (currentTable == TableName.Vehicles.toString()) {
+					String value = table.getValueAt(currentRow, 0).toString();
+					Utilities.delete(value, null, currentTable.toLowerCase(), "license_plate", null);
+				} else if (currentTable == TableName.Vehicles_Equipment.toString() || currentTable == TableName.Reservations_Damages.toString() || currentTable == TableName.Reservations_Extraequipment.toString()) {
+					String value1 = table.getValueAt(currentRow, 0).toString();
+					String value2 = table.getValueAt(currentRow, 1).toString();
+					System.out.println(value1 + " " + table.getColumnName(0)+ "\n " + value2 + " " + table.getColumnName(1));
+					Utilities.delete(value1, value2, currentTable.toLowerCase(), table.getColumnName(0), table.getColumnName(1));
+				} 
+				else {
+					int id = Integer.parseInt(table.getValueAt(currentRow, 0).toString());
+					Utilities.delete(id, null, currentTable.toLowerCase(), null, null);
+				}
 			}
 		});
 
@@ -219,7 +240,7 @@ public class Main {
 							new Edit.Quadruple("first_name", null, TupleType.TextField, true, null),
 							new Edit.Quadruple("last_name", null, TupleType.TextField, true, null),
 							new Edit.Quadruple("phone", null, TupleType.TextFieldInt, true, null),
-							new Edit.Quadruple("driving_license_number", null, TupleType.TextFieldInt, true, null),
+							new Edit.Quadruple("driving_license_number", null, TupleType.TextField, true, null),
 							new Edit.Quadruple("addresses_id", null, TupleType.ComboBox, false, TableName.Addresses) });
 					break;
 				case "Equipment":
@@ -246,7 +267,8 @@ public class Main {
 									new Edit.Quadruple("model", null, TupleType.TextField, true, null),
 									new Edit.Quadruple("company_name", null, TupleType.ComboBox, false,
 											TableName.Car_Brands),
-									new Edit.Quadruple("insurance_name", null, TupleType.ComboBox, true, TableName.Insurances) });
+									new Edit.Quadruple("insurance_name", null, TupleType.ComboBox, true,
+											TableName.Insurances) });
 					break;
 				case "Reservations":
 					edit = new Edit(TableName.Reservations, null,
@@ -255,7 +277,8 @@ public class Main {
 									new Edit.Quadruple("date_endtime", null, TupleType.dateTime, true, null),
 									new Edit.Quadruple("km_at_start", null, TupleType.TextFieldInt, true, null),
 									new Edit.Quadruple("km_at_return", null, TupleType.TextFieldInt, false, null),
-									new Edit.Quadruple("license_plate", null, TupleType.ComboBox, true, TableName.Vehicles),
+									new Edit.Quadruple("license_plate", null, TupleType.ComboBox, true,
+											TableName.Vehicles),
 									new Edit.Quadruple("clients_id", null, TupleType.ComboBox, true, TableName.Clients),
 									new Edit.Quadruple("bills_id", null, TupleType.ComboBox, true, TableName.Bills), });
 					break;
@@ -378,8 +401,6 @@ public class Main {
 					edit = new Edit(TableName.Damages, id,
 							new Edit.Quadruple[] {
 									new Edit.Quadruple("description", table.getValueAt(currentRow, 1),
-											TupleType.TextField, true, null),
-									new Edit.Quadruple("position_part", table.getValueAt(currentRow, 2),
 											TupleType.TextField, true, null) });
 					break;
 				case "Car_Brands":
@@ -403,24 +424,39 @@ public class Main {
 											true, null),
 									new Edit.Quadruple("model", table.getValueAt(currentRow, 6), TupleType.TextField,
 											true, null),
-									new Edit.Quadruple("company_name", table.getValueAt(currentRow, 7), TupleType.ComboBox,
-											true, TableName.Car_Brands),
+									new Edit.Quadruple("company_name", table.getValueAt(currentRow, 7),
+											TupleType.ComboBox, true, TableName.Car_Brands),
 									new Edit.Quadruple("insurance_name", table.getValueAt(currentRow, 8),
 											TupleType.ComboBox, true, TableName.Insurances) });
 					break;
-					
+				case "Clients":
+					edit = new Edit(TableName.Clients, id, new Edit.Quadruple[] {
+							new Edit.Quadruple("first_name", table.getValueAt(currentRow, 1), TupleType.TextField, true, null),
+							new Edit.Quadruple("last_name", table.getValueAt(currentRow, 2), TupleType.TextField, true, null),
+							new Edit.Quadruple("phone", table.getValueAt(currentRow, 3), TupleType.TextFieldInt, true, null),
+							new Edit.Quadruple("driving_license_number", table.getValueAt(currentRow, 4), TupleType.TextField, true, null),
+							new Edit.Quadruple("addresses_id", table.getValueAt(currentRow, 5), TupleType.ComboBox, false, TableName.Addresses) });
+					break;
+
 				case "Reservations":
 					edit = new Edit(TableName.Reservations, id,
 							new Edit.Quadruple[] {
-									new Edit.Quadruple("date_starttime", table.getValueAt(currentRow, 1), TupleType.dateTime, true, null),
-									new Edit.Quadruple("date_endtime", table.getValueAt(currentRow, 2), TupleType.dateTime, false, null),
-									new Edit.Quadruple("km_at_start", table.getValueAt(currentRow, 3), TupleType.TextFieldInt, true, null),
-									new Edit.Quadruple("km_at_return", table.getValueAt(currentRow, 4), TupleType.TextFieldInt, false, null),
-									new Edit.Quadruple("license_plate", table.getValueAt(currentRow, 5), TupleType.ComboBox, true, TableName.Vehicles),
-									new Edit.Quadruple("clients_id", table.getValueAt(currentRow, 6), TupleType.ComboBox, true, TableName.Clients),
-									new Edit.Quadruple("bills_id", table.getValueAt(currentRow, 7), TupleType.ComboBox, true, TableName.Bills), });
+									new Edit.Quadruple("date_starttime", table.getValueAt(currentRow, 1),
+											TupleType.dateTime, true, null),
+									new Edit.Quadruple("date_endtime", table.getValueAt(currentRow, 2),
+											TupleType.dateTime, false, null),
+									new Edit.Quadruple("km_at_start", table.getValueAt(currentRow, 3),
+											TupleType.TextFieldInt, true, null),
+									new Edit.Quadruple("km_at_return", table.getValueAt(currentRow, 4),
+											TupleType.TextFieldInt, false, null),
+									new Edit.Quadruple("license_plate", table.getValueAt(currentRow, 5),
+											TupleType.ComboBox, true, TableName.Vehicles),
+									new Edit.Quadruple("clients_id", table.getValueAt(currentRow, 6),
+											TupleType.ComboBox, true, TableName.Clients),
+									new Edit.Quadruple("bills_id", table.getValueAt(currentRow, 7), TupleType.ComboBox,
+											true, TableName.Bills), });
 					break;
-					
+
 				case "Extra_Equipment":
 					edit = new Edit(TableName.Extra_Equipment, id,
 							new Edit.Quadruple[] {
@@ -443,7 +479,7 @@ public class Main {
 							new Edit.Quadruple("date_of_payment", table.getValueAt(currentRow, 5), TupleType.date, true,
 									null) });
 					break;
-		
+
 				case "Addresses":
 					edit = new Edit(TableName.Addresses, id,
 							new Edit.Quadruple[] {
@@ -549,7 +585,7 @@ public class Main {
 					+ "from clients c inner join addresses a on c.addresses_id = a.addresses_id";
 			break;
 		case "Reservations":
-			sql = "select r.reservations_id, date_starttime, date_endtime, km_at_start, km_at_return, license_plate, c.first_name, c.last_name, b.bill, b.date as bill_date, b.total_price, b.date_of_payment, b.payment_method "
+			sql = "select r.reservations_id, date_starttime, date_endtime, km_at_start, km_at_return, license_plate, c.first_name, c.last_name, b.bill, b.date, b.total_price, b.date_of_payment, b.payment_method "
 					+ "from reservations r inner join bills b on r.bills_id = b.bills_id "
 					+ "inner join clients c on r.clients_id = c.clients_id";
 			break;
@@ -571,7 +607,7 @@ public class Main {
 					+ "inner join clients c on r.clients_id = c.clients_id";
 			break;
 		case "Vehicles_Equipment":
-			sql = "select e.equipment_id, e.description, license_plate  "
+			sql = "select e.equipment_id, license_plate, e.description   "
 					+ "from vehicles_equipment ve inner join equipment e on ve.equipment_id = e.equipment_id";
 			break;
 		default:
@@ -600,6 +636,7 @@ public class Main {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
 	}
 
 }

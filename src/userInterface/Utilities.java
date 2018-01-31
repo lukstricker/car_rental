@@ -14,16 +14,22 @@ public class Utilities {
 
 	private static Database db;
 
-	public static void delete(int id, String tablename) {
+	public static void delete(Object id1, Object id2, String tablename, String extraTable1, String extraTable2) {
 		db = new Database();
-		String sql = "Delete from " + tablename + " Where " + tablename + "_id = " + id + ";";
+		String sql = "";
+		if(extraTable1 != null && extraTable2 == null)
+			sql = "Delete from " + tablename + " Where " + extraTable1 + " = '" + String.valueOf(id1) + "';";
+		else if(extraTable1 != null && extraTable2 != "license_plate") {
+			sql = "Delete from " + tablename + " Where " + extraTable1 + " = '" + Integer.parseInt((String) id1) + "' and " + extraTable2 + " = '" + String.valueOf(id2) + "';";
+		} else if(extraTable1 != null && extraTable2 != null) 
+			sql = "Delete from " + tablename + " Where " + extraTable1 + " = '" + Integer.parseInt((String) id1) + "' and " + extraTable2 + " = '" + Integer.parseInt((String) id2) + "';";
+		else 
+			sql = "Delete from " + tablename + " Where " + tablename + "_id = " + Integer.parseInt((String) id1) + ";";
 		if (!db.deleteData(sql)) {
 			
 			JOptionPane.showMessageDialog(null, "Unable to delete data!", "Error", JOptionPane.ERROR_MESSAGE);
 		} else
-			JOptionPane.showMessageDialog(null, "Deleted successfully!");
-		
-		
+			JOptionPane.showMessageDialog(null, "Deleted successfully!");		
 	}
 
 	/**
